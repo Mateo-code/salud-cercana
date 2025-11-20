@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salud cercana - Prototipo estático</title>
+  <!--
+    Archivo único con HTML, CSS y JavaScript puro.
+    Pensado para abrirse con doble clic sin depender de servidores ni build tools.
+  -->
+  <style>
+    /* Estilos base para tipografía y colores suaves */
+    :root {
+      --verde: #2c7a7b;
+      --verde-suave: #e6fffa;
+      --gris: #f7fafc;
+      --borde: #d6d6d6;
+      --texto: #1a202c;
+      --rojo: #e53e3e;
+      --amarillo: #d69e2e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--gris);
+      color: var(--texto);
+    }
+
+    header {
+      background: var(--verde);
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    main {
+      padding: 16px;
+      max-width: 1200px;
+      margin: 0 auto 32px auto;
+    }
+
+    h1, h2, h3 {
+      margin: 8px 0;
+    }
+
+    .tarjeta {
+      background: white;
+      border: 1px solid var(--borde);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .fila {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      min-width: 200px;
+      flex: 1;
+    }
+
+    input, select, textarea, button {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--borde);
+      font-size: 14px;
+    }
+
+    button {
+      background: var(--verde);
+      color: white;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #215e5e;
+    }
+
+    .boton-claro {
+      background: #ffffff;
+      color: var(--texto);
+      border: 1px solid var(--borde);
+    }
+
+    .boton-rojo {
+      background: var(--rojo);
+    }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .nav button.active {
+      background: var(--verde-suave);
+      color: var(--texto);
+      border: 1px solid var(--verde);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--borde);
+      padding: 8px;
+      text-align: left;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: white;
+    }
+
+    .badge.alto { background: var(--rojo); }
+    .badge.medio { background: var(--amarillo); color: #1a202c; }
+    .badge.bajo { background: var(--verde); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .oculto {
+      display: none;
+    }
+
+    .topbar-info {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .video-simulacion {
+      background: #0f172a;
+      color: white;
+      min-height: 240px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 12px;
+    }
+
+    .video-pequeno {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: #1f2937;
+      padding: 10px;
+      border-radius: 10px;
+      min-width: 140px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-contenido {
+      background: white;
+      max-width: 600px;
+      width: 100%;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .etiqueta-rol {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    .separador {
+      border-top: 1px solid var(--borde);
+      margin: 12px 0;
+    }
+
+    .lista-simple {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .lista-simple li {
+      background: white;
+      border: 1px solid var(--borde);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <strong>Salud cercana</strong>
+      <div style="font-size: 13px; opacity: 0.9;">Prototipo estático sin servidor</div>
+    </div>
+    <div class="topbar-info">
+      <div id="rolActual" class="etiqueta-rol"></div>
+      <button id="cerrarSesion" class="boton-claro">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Pantalla de inicio de sesión -->
+    <section id="vistaLogin" class="tarjeta">
+      <h2>Ingresar</h2>
+      <p>Use su nombre, comunidad y rol para continuar.</p>
+      <form id="formLogin" class="fila">
+        <div class="input-group">
+          <label>Nombre</label>
+          <input id="loginNombre" required placeholder="Ej: María Pérez" />
+        </div>
+        <div class="input-group">
+          <label>Comunidad / Vereda</label>
+          <input id="loginComunidad" required placeholder="Ej: Vereda El Lago" />
+        </div>
+        <div class="input-group">
+          <label>Rol</label>
+          <select id="loginRol" required>
+            <option value="paciente">Paciente/Cuidador</option>
+            <option value="medico">Médico</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="input-group" style="justify-content: flex-end; align-items: flex-start;">
+          <button type="submit">Entrar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Panel principal -->
+    <section id="vistaDashboard" class="oculto">
+      <div class="tarjeta">
+        <h2 id="saludo"></h2>
+        <p id="mensajeRol"></p>
+        <div class="nav" id="menuPrincipal"></div>
+      </div>
+
+      <div id="contenedorVistas">
+        <!-- Módulo pacientes -->
+        <section id="modPacientes" class="tarjeta vista">
+          <h3>Pacientes</h3>
+          <form id="formPaciente">
+            <div class="fila">
+              <div class="input-group">
+                <label>Nombre completo</label>
+                <input id="pacNombre" required />
+              </div>
+              <div class="input-group">
+                <label>Documento / ID</label>
+                <input id="pacDocumento" required />
+              </div>
+              <div class="input-group">
+                <label>Edad</label>
+                <input id="pacEdad" type="number" min="0" required />
+              </div>
+              <div class="input-group">
+                <label>Teléfono</label>
+                <input id="pacTelefono" required />
+              </div>
+              <div class="input-group">
+                <label>Dirección / Vereda</label>
+                <input id="pacDireccion" required />
+              </div>
+            </div>
+            <div class="input-group">
+              <label>Antecedentes médicos breves</label>
+              <textarea id="pacAntecedentes" rows="2" required></textarea>
+            </div>
+            <label style="display: flex; align-items: center; gap: 8px; margin: 8px 0;">
+              <input id="pacConsentimiento" type="checkbox" required />
+              Consentimiento informado
+            </label>
+            <button type="submit">Guardar paciente</button>
+          </form>
+
+          <div class="separador"></div>
+          <h4>Pacientes registrados</h4>
+          <div id="listaPacientes"></div>
+        </section>
+
+        <!-- Módulo citas -->
+        <section id="modCitas" class="tarjeta vista oculta">
+          <h3>Citas</h3>
+          <div id="contenedorFormCitas" class="tarjeta" style="background: var(--verde-suave);"></div>
+          <div class="separador"></div>
+          <div class="fila" style="align-items: center;">
+            <h4 style="flex:1;">Listado de citas</h4>
+            <div id="filtrosCitas" class="fila" style="flex:2;"></div>
+          </div>
+          <div id="tablaCitas"></div>
+          <div class="separador"></div>
+          <button id="abrirLog" class="boton-claro">Ver log de recordatorios</button>
+        </section>
+
+        <!-- Teleconsulta -->
+        <section id="modTeleconsulta" class="tarjeta vista oculta">
+          <h3>Teleconsulta simulada</h3>
+          <p id="teleconsultaInfo"></p>
+          <div class="video-simulacion">
+            <div id="estadoVideo">Videollamada en curso</div>
+            <div class="video-pequeno" id="miniCam">Cámara del médico</div>
+          </div>
+          <div class="fila" style="margin: 12px 0;">
+            <button id="btnCamara">Simular cámara OFF</button>
+            <button id="btnAudio" class="boton-claro">Simular solo audio</button>
+          </div>
+          <div class="tarjeta" style="background: var(--verde-suave);">
+            <h4>Nota de atención / historia breve</h4>
+            <div class="input-group">
+              <label>Resumen</label>
+              <textarea id="notaResumen" rows="2"></textarea>
+            </div>
+            <div class="input-group">
+              <label>Diagnóstico preliminar</label>
+              <textarea id="notaDiagnostico" rows="2"></textarea>
+            </div>
+            <div class="input-group">
+              <label>Recomendaciones</label>
+              <textarea id="notaRecomendaciones" rows="2"></textarea>
+            </div>
+            <button id="guardarNota">Guardar nota y finalizar consulta</button>
+          </div>
+        </section>
+
+        <!-- Log recordatorios -->
+        <section id="modRecordatorios" class="tarjeta vista oculta">
+          <h3>Log de recordatorios SMS</h3>
+          <div id="tablaRecordatorios"></div>
+        </section>
+
+        <!-- Reportes -->
+        <section id="modReportes" class="tarjeta vista oculta">
+          <h3>Reportes generales</h3>
+          <div id="tarjetasReportes" class="grid"></div>
+        </section>
+
+        <!-- Biblioteca -->
+        <section id="modBiblioteca" class="tarjeta vista oculta">
+          <h3>Biblioteca educativa</h3>
+          <div id="listaFichas" class="grid"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal simple para fichas educativas -->
+  <div id="modalFicha" class="modal">
+    <div class="modal-contenido">
+      <h3 id="modalTitulo"></h3>
+      <p id="modalTexto"></p>
+      <button id="cerrarModal" class="boton-claro" style="float: right;">Cerrar</button>
+    </div>
+  </div>
+
+  <script>
+    // --- Utilidades de almacenamiento local (localStorage) ---
+    const llaves = {
+      usuario: 'sc_usuario',
+      pacientes: 'sc_pacientes',
+      citas: 'sc_citas',
+      recordatorios: 'sc_recordatorios'
+    };
+
+    const estado = {
+      usuario: null,
+      pacientes: [],
+      citas: [],
+      recordatorios: [],
+      vistaActual: 'pacientes',
+      citaEnCurso: null,
+      camaraActiva: true,
+      soloAudio: false
+    };
+
+    function cargarDatos() {
+      estado.usuario = JSON.parse(localStorage.getItem(llaves.usuario)) || null;
+      estado.pacientes = JSON.parse(localStorage.getItem(llaves.pacientes)) || [];
+      estado.citas = JSON.parse(localStorage.getItem(llaves.citas)) || [];
+      estado.recordatorios = JSON.parse(localStorage.getItem(llaves.recordatorios)) || [];
+    }
+
+    function guardar(nombreLlave, valor) {
+      localStorage.setItem(nombreLlave, JSON.stringify(valor));
+    }
+
+    // --- Inicialización general ---
+    document.addEventListener('DOMContentLoaded', () => {
+      cargarDatos();
+      configurarEventosLogin();
+      configurarEventosGenerales();
+      configurarBiblioteca();
+      renderizarAplicacion();
+    });
+
+    // --- Manejo de sesión simple ---
+    function configurarEventosLogin() {
+      const formLogin = document.getElementById('formLogin');
+      formLogin.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const usuario = {
+          nombre: document.getElementById('loginNombre').value.trim(),
+          comunidad: document.getElementById('loginComunidad').value.trim(),
+          rol: document.getElementById('loginRol').value
+        };
+        estado.usuario = usuario;
+        guardar(llaves.usuario, usuario);
+        renderizarAplicacion();
+      });
+
+      document.getElementById('cerrarSesion').addEventListener('click', () => {
+        localStorage.removeItem(llaves.usuario);
+        estado.usuario = null;
+        renderizarAplicacion();
+      });
+    }
+
+    // --- Configuración de navegación y botones comunes ---
+    function configurarEventosGenerales() {
+      document.getElementById('btnCamara').addEventListener('click', () => {
+        estado.camaraActiva = !estado.camaraActiva;
+        document.getElementById('btnCamara').textContent = estado.camaraActiva ? 'Simular cámara OFF' : 'Simular cámara ON';
+        document.getElementById('estadoVideo').textContent = estado.camaraActiva ? 'Cámara activa' : 'Cámara apagada';
+        document.getElementById('miniCam').style.opacity = estado.camaraActiva ? '1' : '0.4';
+      });
+
+      document.getElementById('btnAudio').addEventListener('click', () => {
+        estado.soloAudio = !estado.soloAudio;
+        document.getElementById('btnAudio').textContent = estado.soloAudio ? 'Volver a video + audio' : 'Simular solo audio';
+        document.getElementById('estadoVideo').textContent = estado.soloAudio ? 'Modo solo audio' : 'Videollamada en curso';
+      });
+
+      document.getElementById('guardarNota').addEventListener('click', guardarNotaTeleconsulta);
+      document.getElementById('abrirLog').addEventListener('click', () => mostrarVista('recordatorios'));
+      document.getElementById('cerrarModal').addEventListener('click', cerrarModal);
+      document.getElementById('modalFicha').addEventListener('click', (e) => {
+        if (e.target.id === 'modalFicha') cerrarModal();
+      });
+    }
+
+    // --- Render principal según estado ---
+    function renderizarAplicacion() {
+      const estaAutenticado = !!estado.usuario;
+      document.getElementById('vistaLogin').classList.toggle('oculto', estaAutenticado);
+      document.getElementById('vistaDashboard').classList.toggle('oculto', !estaAutenticado);
+      document.getElementById('rolActual').textContent = estado.usuario ? `Rol: ${formatearRol(estado.usuario.rol)}` : '';
+
+      if (!estaAutenticado) return;
+
+      document.getElementById('saludo').textContent = `Hola, ${estado.usuario.nombre}`;
+      document.getElementById('mensajeRol').textContent = `Comunidad: ${estado.usuario.comunidad} | Perfil: ${formatearRol(estado.usuario.rol)}`;
+
+      construirMenu();
+      prepararModuloPacientes();
+      prepararModuloCitas();
+      renderRecordatorios();
+      renderReportes();
+      renderBiblioteca();
+      mostrarVista(estado.vistaActual);
+    }
+
+    function formatearRol(rol) {
+      return rol === 'paciente' ? 'Paciente/Cuidador' : rol === 'medico' ? 'Médico' : 'Admin';
+    }
+
+    // --- Menú principal con vistas permitidas ---
+    function construirMenu() {
+      const menu = document.getElementById('menuPrincipal');
+      menu.innerHTML = '';
+      const items = [
+        { id: 'pacientes', etiqueta: 'Pacientes' },
+        { id: 'citas', etiqueta: 'Citas' },
+        { id: 'teleconsulta', etiqueta: 'Teleconsulta' },
+        { id: 'recordatorios', etiqueta: 'Recordatorios' },
+        { id: 'reportes', etiqueta: 'Reportes', soloAdmin: true },
+        { id: 'biblioteca', etiqueta: 'Biblioteca' }
+      ];
+
+      items.forEach((item) => {
+        if (item.soloAdmin && estado.usuario.rol !== 'admin') return;
+        const btn = document.createElement('button');
+        btn.textContent = item.etiqueta;
+        btn.className = item.id === estado.vistaActual ? 'active' : '';
+        btn.addEventListener('click', () => mostrarVista(item.id));
+        menu.appendChild(btn);
+      });
+    }
+
+    function mostrarVista(id) {
+      estado.vistaActual = id;
+      document.querySelectorAll('.vista').forEach((sec) => sec.classList.add('oculto'));
+      document.getElementById('modPacientes').classList.toggle('oculto', id !== 'pacientes');
+      document.getElementById('modCitas').classList.toggle('oculto', id !== 'citas');
+      document.getElementById('modTeleconsulta').classList.toggle('oculto', id !== 'teleconsulta');
+      document.getElementById('modRecordatorios').classList.toggle('oculto', id !== 'recordatorios');
+      document.getElementById('modReportes').classList.toggle('oculto', id !== 'reportes');
+      document.getElementById('modBiblioteca').classList.toggle('oculto', id !== 'biblioteca');
+
+      // Actualizar contenido que depende del instante
+      if (id === 'citas') renderTablaCitas();
+      if (id === 'recordatorios') renderRecordatorios();
+      if (id === 'reportes') renderReportes();
+      if (id === 'teleconsulta' && estado.citaEnCurso) actualizarTeleconsulta();
+    }
+
+    // --- Pacientes ---
+    function prepararModuloPacientes() {
+      document.getElementById('formPaciente').onsubmit = (e) => {
+        e.preventDefault();
+        const nuevo = {
+          id: Date.now(),
+          nombre: document.getElementById('pacNombre').value.trim(),
+          documento: document.getElementById('pacDocumento').value.trim(),
+          edad: document.getElementById('pacEdad').value.trim(),
+          telefono: document.getElementById('pacTelefono').value.trim(),
+          direccion: document.getElementById('pacDireccion').value.trim(),
+          antecedentes: document.getElementById('pacAntecedentes').value.trim(),
+          consentimiento: document.getElementById('pacConsentimiento').checked,
+          creador: estado.usuario.nombre
+        };
+        estado.pacientes.push(nuevo);
+        guardar(llaves.pacientes, estado.pacientes);
+        e.target.reset();
+        renderPacientes();
+        renderFormularioCitas();
+      };
+
+      renderPacientes();
+    }
+
+    function pacientesVisibles() {
+      if (estado.usuario.rol === 'paciente') {
+        return estado.pacientes.filter(p => p.nombre.toLowerCase() === estado.usuario.nombre.toLowerCase());
+      }
+      return estado.pacientes;
+    }
+
+    function renderPacientes() {
+      const contenedor = document.getElementById('listaPacientes');
+      const lista = pacientesVisibles();
+      if (!lista.length) {
+        contenedor.innerHTML = '<p>No hay pacientes registrados aún.</p>';
+        return;
+      }
+      const tabla = document.createElement('table');
+      tabla.innerHTML = `
+        <thead>
+          <tr>
+            <th>Nombre</th><th>Documento</th><th>Edad</th><th>Teléfono</th><th>Dirección</th><th>Antecedentes</th><th>Consentimiento</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lista.map(p => `
+            <tr>
+              <td>${p.nombre}</td>
+              <td>${p.documento}</td>
+              <td>${p.edad}</td>
+              <td>${p.telefono}</td>
+              <td>${p.direccion}</td>
+              <td>${p.antecedentes}</td>
+              <td>${p.consentimiento ? 'Sí' : 'No'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+      contenedor.innerHTML = '';
+      contenedor.appendChild(tabla);
+    }
+
+    // --- Citas ---
+    function prepararModuloCitas() {
+      renderFormularioCitas();
+      renderTablaCitas();
+    }
+
+    function renderFormularioCitas() {
+      const contenedor = document.getElementById('contenedorFormCitas');
+      // Formulario se muestra a todos para permitir creación simple
+      const pacientesOpciones = pacientesVisibles();
+      const opcionesPacientes = pacientesOpciones.length
+        ? pacientesOpciones.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')
+        : '<option value="" disabled selected>Registre un paciente primero</option>';
+
+      contenedor.innerHTML = `
+        <h4>Crear cita</h4>
+        <form id="formCita">
+          <div class="fila">
+            <div class="input-group">
+              <label>Paciente</label>
+              <select id="citaPaciente" required ${pacientesOpciones.length ? '' : 'disabled'}>
+                ${opcionesPacientes}
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Médico</label>
+              <input id="citaMedico" required placeholder="Nombre del médico" />
+            </div>
+            <div class="input-group">
+              <label>Fecha</label>
+              <input id="citaFecha" type="date" required />
+            </div>
+            <div class="input-group">
+              <label>Hora</label>
+              <input id="citaHora" type="time" required />
+            </div>
+            <div class="input-group">
+              <label>Motivo</label>
+              <input id="citaMotivo" required />
+            </div>
+            <div class="input-group">
+              <label>Triage</label>
+              <select id="citaTriage" required>
+                <option value="Alto">Alto</option>
+                <option value="Medio">Medio</option>
+                <option value="Bajo">Bajo</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" ${pacientesOpciones.length ? '' : 'disabled'}>Guardar cita</button>
+          ${pacientesOpciones.length ? '' : '<p style="margin-top:8px;">Agregue primero un paciente.</p>'}
+        </form>
+      `;
+
+      document.getElementById('formCita').onsubmit = (e) => {
+        e.preventDefault();
+        const pacienteSeleccionado = estado.pacientes.find(p => p.id === Number(document.getElementById('citaPaciente').value));
+        if (!pacienteSeleccionado) return;
+        const nueva = {
+          id: Date.now(),
+          pacienteId: pacienteSeleccionado.id,
+          pacienteNombre: pacienteSeleccionado.nombre,
+          pacienteTelefono: pacienteSeleccionado.telefono,
+          medico: document.getElementById('citaMedico').value.trim(),
+          fecha: document.getElementById('citaFecha').value,
+          hora: document.getElementById('citaHora').value,
+          motivo: document.getElementById('citaMotivo').value.trim(),
+          estado: 'Programada',
+          triage: document.getElementById('citaTriage').value,
+          nota: null
+        };
+        estado.citas.push(nueva);
+        guardar(llaves.citas, estado.citas);
+        e.target.reset();
+        renderTablaCitas();
+      };
+    }
+
+    function citasVisibles() {
+      if (estado.usuario.rol === 'paciente') {
+        const nombreUsuario = estado.usuario.nombre.toLowerCase();
+        return estado.citas.filter(c => c.pacienteNombre.toLowerCase() === nombreUsuario);
+      }
+      if (estado.usuario.rol === 'medico') {
+        const nombreMedico = estado.usuario.nombre.toLowerCase();
+        return estado.citas.filter(c => c.medico.toLowerCase() === nombreMedico);
+      }
+      return estado.citas;
+    }
+
+    function renderTablaCitas() {
+      const contenedorFiltros = document.getElementById('filtrosCitas');
+      contenedorFiltros.innerHTML = '';
+      const contenedorTabla = document.getElementById('tablaCitas');
+      const lista = citasVisibles();
+
+      if (estado.usuario.rol === 'admin') {
+        const filtroEstado = document.createElement('select');
+        filtroEstado.innerHTML = '<option value="">Estado</option><option>Programada</option><option>Cancelada</option><option>Atendida</option>';
+        filtroEstado.addEventListener('change', () => {
+          renderTablaCitasConFiltros(filtroEstado.value, filtroMedico.value);
+        });
+        const filtroMedico = document.createElement('input');
+        filtroMedico.placeholder = 'Filtrar por médico';
+        filtroMedico.addEventListener('input', () => {
+          renderTablaCitasConFiltros(filtroEstado.value, filtroMedico.value);
+        });
+        contenedorFiltros.append(filtroEstado, filtroMedico);
+      }
+
+      renderTablaCitasConFiltros('', '');
+
+      function renderTablaCitasConFiltros(estadoFiltro, medicoFiltro) {
+        const filtradas = lista.filter(c => {
+          const coincideEstado = estadoFiltro ? c.estado === estadoFiltro : true;
+          const coincideMedico = medicoFiltro ? c.medico.toLowerCase().includes(medicoFiltro.toLowerCase()) : true;
+          return coincideEstado && coincideMedico;
+        });
+
+        if (!filtradas.length) {
+          contenedorTabla.innerHTML = '<p>No hay citas registradas.</p>';
+          return;
+        }
+
+        const tabla = document.createElement('table');
+        tabla.innerHTML = `
+          <thead>
+            <tr>
+              <th>ID</th><th>Paciente</th><th>Médico</th><th>Fecha</th><th>Hora</th><th>Motivo</th><th>Triage</th><th>Estado</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filtradas.map(c => `
+              <tr>
+                <td>${c.id}</td>
+                <td>${c.pacienteNombre}</td>
+                <td>${c.medico}</td>
+                <td>${c.fecha}</td>
+                <td>${c.hora}</td>
+                <td>${c.motivo}</td>
+                <td><span class="badge ${c.triage.toLowerCase()}">${c.triage}</span></td>
+                <td>${c.estado}</td>
+                <td>
+                  ${accionesCita(c)}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        `;
+        contenedorTabla.innerHTML = '';
+        contenedorTabla.appendChild(tabla);
+      }
+    }
+
+    function accionesCita(cita) {
+      let botones = '';
+      botones += `<button onclick="abrirTeleconsulta(${cita.id})">Abrir teleconsulta</button>`;
+      botones += `<button class="boton-claro" onclick="enviarRecordatorio(${cita.id})">Enviar recordatorio SMS</button>`;
+      if (estado.usuario.rol === 'medico') {
+        botones += `<button class="boton-claro" onclick="actualizarEstado(${cita.id}, 'Programada')">Programada</button>`;
+        botones += `<button class="boton-rojo" onclick="actualizarEstado(${cita.id}, 'Cancelada')">Cancelar</button>`;
+        botones += `<button onclick="actualizarEstado(${cita.id}, 'Atendida')">Marcar atendida</button>`;
+      }
+      if (estado.usuario.rol === 'admin') {
+        botones += `<button class="boton-claro" onclick="actualizarEstado(${cita.id}, 'Programada')">Programada</button>`;
+        botones += `<button class="boton-rojo" onclick="actualizarEstado(${cita.id}, 'Cancelada')">Cancelar</button>`;
+        botones += `<button onclick="actualizarEstado(${cita.id}, 'Atendida')">Atendida</button>`;
+      }
+      return botones;
+    }
+
+    // --- Teleconsulta ---
+    window.abrirTeleconsulta = function(id) {
+      const cita = estado.citas.find(c => c.id === id);
+      if (!cita) return;
+      estado.citaEnCurso = cita;
+      mostrarVista('teleconsulta');
+      actualizarTeleconsulta();
+    }
+
+    function actualizarTeleconsulta() {
+      const info = document.getElementById('teleconsultaInfo');
+      if (!estado.citaEnCurso) {
+        info.textContent = 'Seleccione una cita para iniciar la teleconsulta.';
+        return;
+      }
+      info.textContent = `Videollamada con ${estado.citaEnCurso.pacienteNombre} - Dr(a). ${estado.citaEnCurso.medico}`;
+      document.getElementById('estadoVideo').textContent = estado.soloAudio ? 'Modo solo audio' : 'Videollamada en curso';
+      document.getElementById('miniCam').style.opacity = estado.camaraActiva ? '1' : '0.4';
+    }
+
+    function guardarNotaTeleconsulta() {
+      if (!estado.citaEnCurso) return;
+      estado.citaEnCurso.nota = {
+        resumen: document.getElementById('notaResumen').value,
+        diagnostico: document.getElementById('notaDiagnostico').value,
+        recomendaciones: document.getElementById('notaRecomendaciones').value,
+      };
+      estado.citaEnCurso.estado = 'Atendida';
+      guardar(llaves.citas, estado.citas);
+      alert('Nota guardada y cita marcada como atendida.');
+      mostrarVista('citas');
+      renderTablaCitas();
+    }
+
+    // --- Acciones de citas ---
+    window.actualizarEstado = function(id, nuevoEstado) {
+      const cita = estado.citas.find(c => c.id === id);
+      if (!cita) return;
+      cita.estado = nuevoEstado;
+      guardar(llaves.citas, estado.citas);
+      renderTablaCitas();
+    }
+
+    window.enviarRecordatorio = function(id) {
+      const cita = estado.citas.find(c => c.id === id);
+      if (!cita) return;
+      const paciente = estado.pacientes.find(p => p.id === cita.pacienteId);
+      const entrada = {
+        id: Date.now(),
+        fechaEnvio: new Date().toLocaleString(),
+        telefono: paciente ? paciente.telefono : 'Desconocido',
+        mensaje: `Recordatorio de cita para ${cita.pacienteNombre} el ${cita.fecha} a las ${cita.hora}`
+      };
+      estado.recordatorios.push(entrada);
+      guardar(llaves.recordatorios, estado.recordatorios);
+      alert('Recordatorio simulado guardado.');
+    }
+
+    // --- Recordatorios ---
+    function renderRecordatorios() {
+      const contenedor = document.getElementById('tablaRecordatorios');
+      if (!estado.recordatorios.length) {
+        contenedor.innerHTML = '<p>No hay recordatorios registrados.</p>';
+        return;
+      }
+      const tabla = document.createElement('table');
+      tabla.innerHTML = `
+        <thead>
+          <tr><th>Fecha/Hora</th><th>Teléfono</th><th>Mensaje</th></tr>
+        </thead>
+        <tbody>
+          ${estado.recordatorios.map(r => `
+            <tr>
+              <td>${r.fechaEnvio}</td>
+              <td>${r.telefono}</td>
+              <td>${r.mensaje}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+      contenedor.innerHTML = '';
+      contenedor.appendChild(tabla);
+    }
+
+    // --- Reportes solo admin ---
+    function renderReportes() {
+      const contenedor = document.getElementById('tarjetasReportes');
+      contenedor.innerHTML = '';
+      if (estado.usuario.rol !== 'admin') return;
+
+      const total = estado.citas.length;
+      const atendidas = estado.citas.filter(c => c.estado === 'Atendida').length;
+      const canceladas = estado.citas.filter(c => c.estado === 'Cancelada').length;
+      const programadasHoy = estado.citas.filter(c => esHoy(c.fecha)).length;
+      const topMotivos = calcularTopMotivos();
+
+      const tarjetas = [
+        { titulo: 'Total de citas', valor: total },
+        { titulo: 'Citas atendidas', valor: atendidas },
+        { titulo: 'Citas canceladas', valor: canceladas },
+        { titulo: 'Programadas para hoy', valor: programadasHoy },
+        { titulo: 'Motivos frecuentes', valor: topMotivos.join(', ') || 'Sin datos' }
+      ];
+
+      tarjetas.forEach(t => {
+        const card = document.createElement('div');
+        card.className = 'tarjeta';
+        card.innerHTML = `<strong>${t.titulo}</strong><div style="font-size:24px; margin-top:8px;">${t.valor}</div>`;
+        contenedor.appendChild(card);
+      });
+    }
+
+    function esHoy(fechaStr) {
+      if (!fechaStr) return false;
+      const hoy = new Date();
+      const fecha = new Date(fechaStr + 'T00:00:00');
+      return fecha.toDateString() === hoy.toDateString();
+    }
+
+    function calcularTopMotivos() {
+      const conteo = {};
+      estado.citas.forEach(c => {
+        const clave = c.motivo.toLowerCase();
+        conteo[clave] = (conteo[clave] || 0) + 1;
+      });
+      return Object.entries(conteo)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([motivo]) => motivo);
+    }
+
+    // --- Biblioteca educativa ---
+    const fichas = [
+      { titulo: 'Control de hipertensión', breve: 'Pasos sencillos para controlar la presión.', detalle: 'Mida su presión con regularidad, reduzca la sal y consulte a su médico si se siente mareado.' },
+      { titulo: 'Cuidado de heridas en casa', breve: 'Cómo limpiar y cubrir heridas leves.', detalle: 'Lave con agua y jabón, use gasas limpias y cambie el vendaje diariamente.' },
+      { titulo: 'Ejercicios suaves para mayores', breve: 'Movimientos que puede hacer en casa.', detalle: 'Camine 15 minutos al día, estire brazos y piernas y mantenga buena hidratación.' },
+      { titulo: 'Signos de alarma en fiebre', breve: 'Identifique cuándo buscar ayuda.', detalle: 'Fiebre por más de 48 horas, dificultad para respirar o deshidratación requieren atención.' },
+      { titulo: 'Alimentación balanceada', breve: 'Platos sencillos y nutritivos.', detalle: 'Incluya frutas, verduras y proteínas; evite exceso de azúcares y grasas saturadas.' }
+    ];
+
+    function configurarBiblioteca() {
+      document.getElementById('listaFichas').addEventListener('click', (e) => {
+        if (e.target.dataset.ficha) {
+          abrirFicha(Number(e.target.dataset.ficha));
+        }
+      });
+    }
+
+    function renderBiblioteca() {
+      const contenedor = document.getElementById('listaFichas');
+      contenedor.innerHTML = '';
+      fichas.forEach((ficha, idx) => {
+        const card = document.createElement('div');
+        card.className = 'tarjeta';
+        card.innerHTML = `
+          <h4>${ficha.titulo}</h4>
+          <p>${ficha.breve}</p>
+          <button data-ficha="${idx}">Leer más</button>
+        `;
+        contenedor.appendChild(card);
+      });
+    }
+
+    function abrirFicha(idx) {
+      const ficha = fichas[idx];
+      document.getElementById('modalTitulo').textContent = ficha.titulo;
+      document.getElementById('modalTexto').textContent = ficha.detalle;
+      document.getElementById('modalFicha').style.display = 'flex';
+    }
+
+    function cerrarModal() {
+      document.getElementById('modalFicha').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
